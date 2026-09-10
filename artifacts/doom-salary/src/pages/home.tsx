@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { useSalaryData, parseNumber, formatKWD } from '@/hooks/use-salary-data';
-import { Plus, Trash2, Wallet, Receipt, AlertCircle, CalendarDays } from 'lucide-react';
+import { Plus, Trash2, Wallet, Receipt, AlertCircle, CalendarDays, ShoppingBag } from 'lucide-react';
 
 export default function Home() {
   const [salaryError, setSalaryError] = useState('');
+  const [purchaseName, setPurchaseName] = useState('');
+  const [purchaseAmount, setPurchaseAmount] = useState('');
+  const [purchaseError, setPurchaseError] = useState('');
+  const [purchaseResult, setPurchaseResult] = useState<{
+    message?: string;
+    percentage?: number;
+    tone: 'green' | 'amber' | 'red' | 'neutral';
+    exceedsRemaining?: boolean;
+  } | null>(null);
   const {
     salary,
     setSalary,
@@ -47,6 +56,7 @@ export default function Home() {
     }
 
     setSalaryError('');
+    setPurchaseResult(null);
     calculate();
   };
 
@@ -54,6 +64,52 @@ export default function Home() {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       updateCommitment(id, 'amount', value);
     }
+  };
+
+  const handlePurchaseAmountChange = (value: string) => {
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setPurchaseAmount(value);
+      setPurchaseError('');
+      setPurchaseResult(null);
+    }
+  };
+
+  const handlePurchaseCheck = () => {
+    if (!isCalculated) {
+      setPurchaseError('احسب راتبك والتزاماتك أول');
+      setPurchaseResult(null);
+      return;
+    }
+
+    const amount = parseNumber(purchaseAmount);
+    if (amount <= 0) {
+      setPurchaseError('أدخل سعر الشي أو القسط الشهري');
+      setPurchaseResult(null);
+      return;
+    }
+
+    setPurchaseError('');
+
+    if (remainingSalary <= 0 || amount > remainingSalary) {
+      const percentage = remainingSalary > 0 ? (amount / remainingSalary) * 100 : undefined;
+      setPurchaseResult({
+        message: 'المبلغ أعلى من راتبك المتبقي حاليًا',
+        tone: 'red',
+        percentage,
+        exceedsRemaining: true,
+      });
+      return;
+    }
+
+    const percentage = (amount / remainingSalary) * 100;
+    const result =
+      percentage <= 20
+        ? { message: 'مناسبة لميزانيتك', tone: 'green' as const }
+        : percentage <= 40
+          ? { message: 'ممكن، بس انتبه لصرفك', tone: 'amber' as const }
+          : { message: 'الأفضل تأجلها', tone: 'red' as const };
+
+    setPurchaseResult({ ...result, percentage });
   };
 
   return (
@@ -215,6 +271,96 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        {/* Purchase Check Section */}
+        <section className="bg-card rounded-[2rem] p-6 shadow-xl shadow-primary/5 border border-card-border space-y-5">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-foreground">أقدر عليها؟</h2>
+          </div>
+
+          <div className="space-y-3">
+            <label htmlFor="purchase-name" className="block text-sm font-semibold text-foreground">
+              اسم الشي
+            </label>
+            <input
+              id="purchase-name"
+              type="text"
+              value={purchaseName}
+              onChange={(e) => setPurchaseName(e.target.value)}
+              placeholder="مثال: سماعة جديدة"
+              className="w-full bg-muted/50 border border-input rounded-2xl py-3 px-4 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-right"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label htmlFor="purchase-amount" className="block text-sm font-semibold text-foreground">
+              السعر أو القسط الشهري
+            </label>
+            <div className="relative flex items-center">
+              <input
+                id="purchase-amount"
+                type="text"
+                inputMode="decimal"
+                value={purchaseAmount}
+                onChange={(e) => handlePurchaseAmountChange(e.target.value)}
+                placeholder="0.000"
+                className="w-full bg-muted/50 border border-input rounded-2xl py-3 px-4 pr-14 text-sm font-bold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-right"
+                dir="ltr"
+              />
+              <span className="absolute right-5 text-muted-foreground font-medium select-none">
+                د.ك
+              </span>
+            </div>
+          </div>
+
+          {purchaseError && (
+            <p className="text-sm font-semibold text-destructive" role="alert">
+              {purchaseError}
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={handlePurchaseCheck}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3.5 rounded-2xl shadow-lg shadow-primary/15 transition-transform active:scale-[0.98]"
+          >
+            شوف إذا تناسبني
+          </button>
+
+          {purchaseResult && isCalculated && (
+            <div
+              className={`rounded-2xl p-5 border ${
+                purchaseResult.tone === 'green'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : purchaseResult.tone === 'amber'
+                    ? 'bg-amber-50 border-amber-200 text-amber-900'
+                    : 'bg-red-50 border-red-200 text-red-800'
+              }`}
+              role="status"
+            >
+              <p className="text-lg font-black">{purchaseResult.message}</p>
+              {purchaseResult.exceedsRemaining ? (
+                <>
+                  <p className="mt-2 text-sm font-medium">
+                    المتبقي عندك: <span dir="ltr">{formatKWD(Math.max(remainingSalary, 0))}</span>
+                  </p>
+                  {purchaseResult.percentage !== undefined && (
+                    <p className="mt-2 text-sm font-medium">
+                      هالشراء ياخذ تقريبًا{' '}
+                      <span dir="ltr">{purchaseResult.percentage.toFixed(1)}%</span> من المبلغ المتبقي عندك
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="mt-2 text-sm font-medium">
+                  هالشراء ياخذ تقريبًا{' '}
+                  <span dir="ltr">{purchaseResult.percentage?.toFixed(1)}%</span> من المبلغ المتبقي عندك
+                </p>
+              )}
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Floating CTA */}
