@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "DOOM | دُوم"
+description = "تطبيق عربي بسيط لإدارة الراتب الشهري بالدينار الكويتي، وحساب الالتزامات والمتبقي وميزانية الصرف اليومية مع حفظ البيانات محلياً."
+version = "1.0.0"
+id = "artifacts/doom-salary"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19024
+
+[services.development]
+run = "pnpm --filter @workspace/doom-salary run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/doom-salary", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/doom-salary/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19024"
+BASE_PATH = "/"
