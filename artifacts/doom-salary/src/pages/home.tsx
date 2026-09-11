@@ -127,7 +127,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8 pb-32">
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8 pb-8">
         {/* Salary Input Section */}
         <section className="bg-card rounded-[2rem] p-6 shadow-xl shadow-primary/5 border border-card-border">
           <label htmlFor="salary" className="block text-sm font-semibold text-foreground mb-3">
@@ -223,6 +223,16 @@ export default function Home() {
             إضافة التزام
           </button>
         </section>
+
+        {/* Calculate CTA */}
+        <div>
+          <button
+            onClick={handleCalculate}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold py-4 rounded-2xl shadow-xl shadow-primary/25 transition-transform active:scale-[0.98] flex items-center justify-center"
+          >
+            احسب لي
+          </button>
+        </div>
 
         {/* Results Section */}
         {isCalculated && (
@@ -363,17 +373,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Floating CTA */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
-        <div className="max-w-2xl mx-auto pointer-events-auto">
-          <button
-            onClick={handleCalculate}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-bold py-4 rounded-2xl shadow-xl shadow-primary/25 transition-transform active:scale-[0.98] flex items-center justify-center"
-          >
-            احسب لي
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
