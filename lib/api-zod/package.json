@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "zod": "catalog:"
   }
